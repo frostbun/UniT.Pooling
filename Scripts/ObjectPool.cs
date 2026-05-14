@@ -13,7 +13,7 @@ namespace UniT.Pooling
 
         [SerializeField] private GameObject prefab = null!;
 
-        private readonly Queue<GameObject>   pooledObjects  = new();
+        private readonly Stack<GameObject>   pooledObjects  = new();
         private readonly HashSet<GameObject> spawnedObjects = new();
 
         public static ObjectPool Construct(GameObject prefab, Transform parent)
@@ -49,13 +49,13 @@ namespace UniT.Pooling
         {
             while (this.pooledObjects.Count < count)
             {
-                this.pooledObjects.Enqueue(this.Instantiate());
+                this.pooledObjects.Push(this.Instantiate());
             }
         }
 
         public GameObject Spawn(Vector3? position = null, Quaternion? rotation = null, Transform? parent = null, bool spawnInWorldSpace = true)
         {
-            var instance = this.pooledObjects.DequeueOrDefault(this.Instantiate);
+            var instance = this.pooledObjects.PopOrDefault(this.Instantiate);
             instance.transform.SetPositionAndRotation(position ?? Vector3.zero, rotation ?? Quaternion.identity);
             instance.transform.SetParent(parent, spawnInWorldSpace);
             instance.SetActive(true);
@@ -74,7 +74,7 @@ namespace UniT.Pooling
         {
             if (!this.spawnedObjects.Remove(instance)) throw new InvalidOperationException($"{instance.name} was not spawned from {this.name}");
             instance.transform.SetParent(this.transform, false);
-            this.pooledObjects.Enqueue(instance);
+            this.pooledObjects.Push(instance);
             this.Recycled?.Invoke(instance);
         }
 
@@ -93,7 +93,7 @@ namespace UniT.Pooling
         {
             while (this.pooledObjects.Count > retainCount)
             {
-                var instance = this.pooledObjects.Dequeue();
+                var instance = this.pooledObjects.Pop();
                 Destroy(instance);
                 this.CleanedUp?.Invoke(instance);
             }
