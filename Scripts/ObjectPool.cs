@@ -73,9 +73,17 @@ namespace UniT.Pooling
         public void Recycle(GameObject instance)
         {
             if (!this.spawnedObjects.Remove(instance)) throw new InvalidOperationException($"{instance.name} was not spawned from {this.name}");
-            instance.transform.SetParent(this.transform, false);
-            this.pooledObjects.Push(instance);
-            this.Recycled?.Invoke(instance);
+            if (instance)
+            {
+                instance.transform.SetParent(this.transform, false);
+                this.pooledObjects.Push(instance);
+                this.Recycled?.Invoke(instance);
+            }
+            else
+            {
+                this.Recycled?.Invoke(instance!);
+                this.CleanedUp?.Invoke(instance!);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,8 +102,8 @@ namespace UniT.Pooling
             while (this.pooledObjects.Count > retainCount)
             {
                 var instance = this.pooledObjects.Pop();
-                Destroy(instance);
-                this.CleanedUp?.Invoke(instance);
+                if (instance) Destroy(instance);
+                this.CleanedUp?.Invoke(instance!);
             }
         }
 

@@ -180,14 +180,19 @@ namespace UniT.Pooling
         private void Unload(GameObject prefab)
         {
             if (!this.TryGetPool(prefab, out var pool)) return;
-            this.RecycleAll(prefab);
+            pool.RecycleAll();
+            pool.Cleanup(0);
+            this.instanceToPool.RemoveWhere((_, otherPool) => otherPool == pool);
             pool.Instantiated -= this.OnInstantiated;
             pool.Spawned      -= this.OnSpawned;
             pool.Recycled     -= this.OnRecycled;
             pool.CleanedUp    -= this.OnCleanedUp;
-            Object.Destroy(pool.gameObject);
+            if (pool)
+            {
+                Object.Destroy(pool.gameObject);
+                this.logger.Debug($"Destroyed {pool.name}");
+            }
             this.prefabToPool.Remove(prefab);
-            this.logger.Debug($"Destroyed {pool.name}");
         }
 
         private bool TryGetPool(GameObject prefab, [MaybeNullWhen(false)] out ObjectPool pool)
@@ -208,6 +213,29 @@ namespace UniT.Pooling
         private void OnSpawned(GameObject      instance) => this.spawned?.Invoke(instance);
         private void OnRecycled(GameObject     instance) => this.recycled?.Invoke(instance);
         private void OnCleanedUp(GameObject    instance) => this.cleanedUp?.Invoke(instance);
+
+        #endregion
+
+        #region Finalizer
+
+        private void Dispose()
+        {
+            this.keyToPrefab.SafeForEach(this.Unload);
+            this.prefabToPool.Keys.SafeForEach(this.Unload);
+            if (this.poolsContainer) Object.Destroy(this.poolsContainer.gameObject);
+        }
+
+        void IDisposable.Dispose()
+        {
+            this.Dispose();
+            this.logger.Debug("Disposed");
+        }
+
+        ~ObjectPoolManager()
+        {
+            this.Dispose();
+            this.logger.Debug("Finalized");
+        }
 
         #endregion
     }

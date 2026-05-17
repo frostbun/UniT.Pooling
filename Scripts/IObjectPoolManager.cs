@@ -12,7 +12,7 @@ namespace UniT.Pooling
     using System.Collections;
     #endif
 
-    public interface IObjectPoolManager
+    public interface IObjectPoolManager : IDisposable
     {
         public event Action<GameObject> Instantiated;
 
