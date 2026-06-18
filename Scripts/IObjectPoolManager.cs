@@ -49,6 +49,9 @@ namespace UniT.Pooling
         public T Spawn<T>(T prefab, Vector3? position = null, Quaternion? rotation = null, Transform? parent = null, bool spawnInWorldSpace = true) where T : Component => this.Spawn(prefab.gameObject, position, rotation, parent, spawnInWorldSpace).GetComponent<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Spawn<T>(GameObject prefab, Vector3? position = null, Quaternion? rotation = null, Transform? parent = null, bool spawnInWorldSpace = true) where T : notnull => this.Spawn(prefab, position, rotation, parent, spawnInWorldSpace).GetComponentOrThrow<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Spawn<T>(object key, Vector3? position = null, Quaternion? rotation = null, Transform? parent = null, bool spawnInWorldSpace = true) where T : notnull => this.Spawn(key, position, rotation, parent, spawnInWorldSpace).GetComponentOrThrow<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
